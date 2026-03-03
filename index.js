@@ -355,12 +355,15 @@ function update(time) {
         player.update(dt);
         player.draw();
 
-        // Spawn logic
+        // Spawn logic - Spawns faster over time
         enemySpawnTimer += dt;
-        if (enemySpawnTimer > 1200 / (difficultyMultiplier * 0.8)) {
+        // Base interval is 1200ms, reduced significantly by difficultyMultiplier
+        const currentSpawnInterval = 1200 / (difficultyMultiplier * 1.5);
+        if (enemySpawnTimer > Math.max(200, currentSpawnInterval)) {
             enemies.push(new Enemy());
             enemySpawnTimer = 0;
-            difficultyMultiplier += 0.005;
+            // difficultyMultiplier increases every frame, making spawns faster
+            difficultyMultiplier += 0.008;
         }
 
         // Update Projectiles

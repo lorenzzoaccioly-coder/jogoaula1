@@ -286,12 +286,14 @@ function update(time) {
         player.update(dt);
         player.draw();
 
-        // Spawn enemies
+        // Spawn enemies - Frequency increases over time
         enemySpawnTimer += dt;
-        if (enemySpawnTimer > 1000) {
+        // Calculation to reduce spawn time based on current difficulty
+        const spawnInterval = 1000 / (enemySpeed / ENEMY_SPEED_BASE);
+        if (enemySpawnTimer > Math.max(250, spawnInterval)) {
             enemies.push(new Enemy());
             enemySpawnTimer = 0;
-            enemySpeed += 0.05; // Progressive difficulty
+            enemySpeed += 0.08; // Progressive difficulty
         }
 
         // Update Bullets
