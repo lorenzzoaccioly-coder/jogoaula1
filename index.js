@@ -195,7 +195,14 @@ class Player {
     }
 
     fire() {
-        bullets.push(new Bullet(this.x, this.y - 15));
+        // Double fire check: score based milestone (e.g., 5000 points)
+        if (score >= 5000) {
+            bullets.push(new Bullet(this.x - 12, this.y - 15));
+            bullets.push(new Bullet(this.x + 12, this.y - 15));
+        } else {
+            bullets.push(new Bullet(this.x, this.y - 15));
+        }
+
         // Recoil particles
         for (let i = 0; i < 2; i++) {
             particles.push(new Particle(this.x, this.y - 10, this.color, (Math.random() - 0.5) * 4, -2));
@@ -361,15 +368,14 @@ function update(time) {
         player.update(dt);
         player.draw();
 
-        // Spawn logic - Spawns faster over time
+        // Spawn logic - Spawns faster over time, but reduced base quantity
         enemySpawnTimer += dt;
-        // Base interval is 1200ms, reduced significantly by difficultyMultiplier
-        const currentSpawnInterval = 1200 / (difficultyMultiplier * 1.5);
-        if (enemySpawnTimer > Math.max(200, currentSpawnInterval)) {
+        // Adjusted: Base interval 2000ms (was 1200ms) for fewer enemies
+        const currentSpawnInterval = 2000 / (difficultyMultiplier * 1.2);
+        if (enemySpawnTimer > Math.max(350, currentSpawnInterval)) {
             enemies.push(new Enemy());
             enemySpawnTimer = 0;
-            // difficultyMultiplier increases every frame, making spawns faster
-            difficultyMultiplier += 0.008;
+            difficultyMultiplier += 0.005; // Slightly slower scaling
         }
 
         // Update Projectiles
@@ -405,6 +411,13 @@ function update(time) {
                     if (e.hp <= 0) {
                         e.active = false;
                         score += e.scoreValue;
+
+                        // HP Regeneration milestone: every 2000 points
+                        if (score % 2000 < 100 && hp < 100) {
+                            hp = Math.min(100, hp + 5);
+                            showScorePopup(player.x, player.y - 50, "REPARO +5");
+                        }
+
                         showScorePopup(e.x, e.y, e.scoreValue);
                         spawnExplosion(e.x, e.y, e.color, 30);
                         shakeScreen(5);

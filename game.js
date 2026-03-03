@@ -106,7 +106,14 @@ class Player {
     }
 
     fire() {
-        bullets.push(new Bullet(this.x, this.y - 20, -1));
+        // Tiro duplo ao atingir 3000 pontos
+        if (score >= 3000) {
+            bullets.push(new Bullet(this.x - 10, this.y - 20, -1));
+            bullets.push(new Bullet(this.x + 10, this.y - 20, -1));
+        } else {
+            bullets.push(new Bullet(this.x, this.y - 20, -1));
+        }
+
         // Add recoil effect to particles
         for (let i = 0; i < 3; i++) {
             particles.push(new Particle(this.x, this.y + 10, this.color, (Math.random() - 0.5) * 2, 2 + Math.random() * 2));
@@ -289,14 +296,14 @@ function update(time) {
         player.update(dt);
         player.draw();
 
-        // Spawn enemies - Frequency increases over time
+        // Spawn enemies - Frequency increases over time, but reduced base quantity
         enemySpawnTimer += dt;
-        // Calculation to reduce spawn time based on current difficulty
-        const spawnInterval = 1000 / (enemySpeed / ENEMY_SPEED_BASE);
-        if (enemySpawnTimer > Math.max(250, spawnInterval)) {
+        // Adjusted: Base interval 1500ms (was 1000ms) for fewer enemies
+        const spawnInterval = 1500 / (enemySpeed / ENEMY_SPEED_BASE);
+        if (enemySpawnTimer > Math.max(350, spawnInterval)) {
             enemies.push(new Enemy());
             enemySpawnTimer = 0;
-            enemySpeed += 0.08; // Progressive difficulty
+            enemySpeed += 0.06; // Slower scaling
         }
 
         // Update Bullets
@@ -335,6 +342,12 @@ function update(time) {
                     if (e.hp <= 0) {
                         e.active = false;
                         score += 50;
+
+                        // Regeneração a cada 1000 pontos
+                        if (score % 1000 < 50 && hp < 100) {
+                            hp = Math.min(100, hp + 10);
+                        }
+
                         spawnExplosion(e.x, e.y, e.color);
                     }
                 }
