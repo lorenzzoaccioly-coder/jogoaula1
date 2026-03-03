@@ -66,6 +66,20 @@ window.addEventListener('touchmove', (e) => {
     }
 }, { passive: false });
 
+// Click/Touch to shoot
+window.addEventListener('mousedown', () => {
+    if (gameState === 'PLAYING') player.fire();
+});
+
+window.addEventListener('touchstart', (e) => {
+    if (gameState === 'PLAYING') {
+        // Update position before firing if it's the first touch
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
+        player.fire();
+    }
+});
+
 // --- UTILS ---
 function createStars() {
     stars = [];
@@ -149,13 +163,13 @@ class Player {
     }
 
     update(dt) {
-        // Smooth movement
+        // Smooth movement - Slower response (modified from 0.15 to 0.05)
         let prevX = this.x;
-        this.x += (mouseX - this.x) * 0.15;
-        this.y += (mouseY - this.y) * 0.15;
+        this.x += (mouseX - this.x) * 0.05;
+        this.y += (mouseY - this.y) * 0.05;
 
         // Visual tilt based on movement
-        this.tilt = (this.x - prevX) * 0.5;
+        this.tilt = (this.x - prevX) * 0.8;
         this.tilt = Math.max(-0.5, Math.min(0.5, this.tilt));
 
         // Bounds
@@ -167,7 +181,8 @@ class Player {
             particles.push(new Particle(this.x, this.y + 25, '#c084fc', (Math.random() - 0.5) * 2, 5 + Math.random() * 3));
         }
 
-        // Auto Fire
+        // Auto Fire Disabled (Moved to click/touch events)
+        /*
         if (gameState === 'PLAYING') {
             this.fireTimer += dt;
             const fireRate = 180;
@@ -176,6 +191,7 @@ class Player {
                 this.fireTimer = 0;
             }
         }
+        */
     }
 
     fire() {

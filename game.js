@@ -59,6 +59,18 @@ window.addEventListener('touchmove', (e) => {
 window.addEventListener('keydown', (e) => keys[e.code] = true);
 window.addEventListener('keyup', (e) => keys[e.code] = false);
 
+// Click/Touch to shoot
+window.addEventListener('mousedown', () => {
+    if (gameState === 'PLAYING') player.fire();
+});
+window.addEventListener('touchstart', (e) => {
+    if (gameState === 'PLAYING') {
+        mouseX = e.touches[0].clientX;
+        mouseY = e.touches[0].clientY;
+        player.fire();
+    }
+});
+
 // --- CLASSES ---
 
 class Player {
@@ -71,17 +83,18 @@ class Player {
     }
 
     update(dt) {
-        // Smooth follow mouse
+        // Smooth follow mouse - Slower (0.05)
         let dx = mouseX - this.x;
         let dy = mouseY - this.y;
-        this.x += dx * 0.15;
-        this.y += dy * 0.15;
+        this.x += dx * 0.05;
+        this.y += dy * 0.05;
 
         // Keep inside bounds
         this.x = Math.max(this.size, Math.min(canvas.width - this.size, this.x));
         this.y = Math.max(this.size, Math.min(canvas.height - this.size, this.y));
 
-        // Auto-fire
+        // Auto-fire Disabled
+        /*
         if (gameState === 'PLAYING') {
             this.fireTimer = (this.fireTimer || 0) + dt;
             if (this.fireTimer > 150) {
@@ -89,6 +102,7 @@ class Player {
                 this.fireTimer = 0;
             }
         }
+        */
     }
 
     fire() {
