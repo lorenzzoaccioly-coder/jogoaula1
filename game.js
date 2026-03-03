@@ -167,6 +167,9 @@ class Enemy {
         this.y += this.speed;
         if (this.y > canvas.height + 50) {
             this.active = false;
+            // Penalidade por deixar escapar (GAME OVER se acumular)
+            hp -= 10;
+            if (hp <= 0) endGame();
         }
     }
 

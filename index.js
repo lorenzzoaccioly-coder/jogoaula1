@@ -262,7 +262,13 @@ class Enemy {
             this.x += Math.sin(Date.now() / 200 + this.sinOffset) * 4;
         }
 
-        if (this.y > canvas.height + 50) this.active = false;
+        if (this.y > canvas.height + 50) {
+            this.active = false;
+            // Penalidade por deixar escapar
+            hp -= 10;
+            shakeScreen(10);
+            if (hp <= 0) endGame();
+        }
     }
 
     draw() {
