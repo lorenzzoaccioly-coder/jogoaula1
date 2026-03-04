@@ -23,6 +23,7 @@ let bullets = [];
 let particles = [];
 let powerups = [];
 let stars = [];
+let enemyBullets = [];
 let enemySpawnTimer = 0;
 let difficultyMultiplier = 1;
 let mouseX = window.innerWidth / 2;
@@ -35,7 +36,8 @@ const BULLET_SPEED = 12;
 const ENEMY_TYPES = [
     { name: 'Drone', hp: 1, speed: 2.5, color: '#f87171', score: 100, size: 25 },
     { name: 'Interceptor', hp: 2, speed: 4.5, color: '#fcd34d', score: 250, size: 20 },
-    { name: 'Destroyer', hp: 5, speed: 1.5, color: '#c084fc', score: 1000, size: 45 }
+    { name: 'Destroyer', hp: 5, speed: 1.5, color: '#c084fc', score: 1000, size: 45 },
+    { name: 'Sniper', hp: 3, speed: 2, color: '#4ade80', score: 500, size: 30 }
 ];
 
 // --- INITIALIZATION ---
@@ -245,7 +247,13 @@ class Player {
 
 class Enemy {
     constructor() {
-        const typeIndex = Math.random() < 0.7 ? 0 : (Math.random() < 0.9 ? 1 : 2);
+        const roll = Math.random();
+        let typeIndex = 0;
+        if (roll < 0.5) typeIndex = 0;      // Drone
+        else if (roll < 0.75) typeIndex = 1; // Interceptor
+        else if (roll < 0.9) typeIndex = 2;  // Destroyer
+        else typeIndex = 3;                  // Sniper
+
         const type = ENEMY_TYPES[typeIndex];
 
         this.name = type.name;
@@ -259,6 +267,7 @@ class Enemy {
         this.scoreValue = type.score;
         this.active = true;
         this.sinOffset = Math.random() * Math.PI * 2;
+        this.shootTimer = 0;
     }
 
     update(dt) {
@@ -275,6 +284,15 @@ class Enemy {
             hp -= 10;
             shakeScreen(10);
             if (hp <= 0) endGame();
+        }
+
+        // Sniper shooting logic
+        if (this.name === 'Sniper' && this.active && this.y > 0) {
+            this.shootTimer += dt;
+            if (this.shootTimer > 2000) {
+                enemyBullets.push(new Bullet(this.x, this.y + 15, 1, this.color));
+                this.shootTimer = -Math.random() * 1000; // Randomize next shot
+            }
         }
     }
 
@@ -293,6 +311,16 @@ class Enemy {
             ctx.lineTo(-this.size, 0);
             ctx.closePath();
             ctx.fill();
+        } else if (this.name === 'Sniper') {
+            ctx.beginPath();
+            ctx.moveTo(0, this.size);
+            ctx.lineTo(this.size * 0.8, -this.size * 0.5);
+            ctx.lineTo(0, -this.size * 0.8);
+            ctx.lineTo(-this.size * 0.8, -this.size * 0.5);
+            ctx.closePath();
+            ctx.fill();
+            // Barrel
+            ctx.fillRect(-3, 0, 6, this.size + 5);
         } else {
             ctx.beginPath();
             ctx.moveTo(0, this.size);
@@ -307,23 +335,25 @@ class Enemy {
 }
 
 class Bullet {
-    constructor(x, y) {
+    constructor(x, y, dir = -1, color = '#22d3ee') {
         this.x = x;
         this.y = y;
-        this.speed = BULLET_SPEED;
+        this.dir = dir; // -1 for player, 1 for enemy
+        this.speed = BULLET_SPEED * (dir === 1 ? 0.6 : 1); // Enemy bullets are slower
+        this.color = color;
         this.active = true;
     }
 
     update() {
-        this.y -= this.speed;
-        if (this.y < -50) this.active = false;
+        this.y += this.speed * this.dir;
+        if (this.y < -50 || this.y > canvas.height + 50) this.active = false;
     }
 
     draw() {
         ctx.save();
         ctx.shadowBlur = 10;
-        ctx.shadowColor = '#22d3ee';
-        ctx.fillStyle = '#fff';
+        ctx.shadowColor = this.color;
+        ctx.fillStyle = this.color;
         ctx.fillRect(this.x - 2, this.y - 12, 4, 15);
         ctx.restore();
     }
@@ -390,6 +420,23 @@ function update(time) {
         enemies.forEach(e => {
             e.update(dt);
             e.draw();
+
+            // Update Enemy Projectiles
+            enemyBullets = enemyBullets.filter(eb => eb.active);
+            enemyBullets.forEach(eb => {
+                eb.update();
+                eb.draw();
+
+                // Collision with Player
+                const distEB = Math.hypot(eb.x - player.x, eb.y - player.y);
+                if (distEB < player.size / 2 + 5) {
+                    eb.active = false;
+                    hp -= 5;
+                    shakeScreen(8);
+                    spawnExplosion(player.x, player.y, '#fff', 5, 2);
+                    if (hp <= 0) endGame();
+                }
+            });
 
             // Collision with Player
             const distP = Math.hypot(e.x - player.x, e.y - player.y);
@@ -466,6 +513,7 @@ function resetGame() {
     hp = 100;
     enemies = [];
     bullets = [];
+    enemyBullets = [];
     particles = [];
     difficultyMultiplier = 1;
     gameState = 'PLAYING';
